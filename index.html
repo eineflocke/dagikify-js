@@ -1,0 +1,1152 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dagikify.js v20230525</title>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000;
+}
+body, input, button, select {
+  font-size: 14px;
+  color: #333;
+  font-family: Consolas, Meiryo, '游ゴシック', monospace;
+}
+#panel_wrapper {
+  z-index: 1100;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  width: 200px;
+  max-height: calc(100vh - 20px);
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+}
+#panel {
+  position: relative;
+  padding-right: 5px;
+  padding-top: 5px;
+  margin-top: 5px;
+  max-height: calc(100vh - 70px);
+  overflow-y: auto;
+}
+#brand4panel, #brand4footer, #brand4usage {
+  font-weight: 700;
+}
+input[type=checkbox], label, button {
+  cursor: pointer;
+}
+table {
+  border-collapse: collapse;
+}
+.tableleft {
+  text-align: left;
+}
+.tableright {
+  text-align: right;
+}
+input[type=text] {
+  width: 50px;
+  padding: 2px;
+  border: 1px solid #aaa;
+  text-align: right;
+}
+.invalid {
+  background-color: #fdd;
+}
+#progress {
+  width: 150px;
+  height: 10px;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: none;
+  background-color: #eee;
+}
+::-webkit-progress-bar {
+  background-color: #eee;
+}
+::-moz-progress-bar {
+  background-color: #36c;
+}
+::-webkit-progress-value {
+  background-color: #36c;
+}
+#content {
+  width: 160px;
+}
+#canvasG, #canvasA, #centerText {
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+#canvasG {
+  z-index: 1000;
+}
+#canvasA {
+  z-index: 1001;
+}
+#centerText {
+  pointer-events: none;
+  z-index: 1090;
+  color: #000;
+  text-align: center;
+  font-size: 4vh;
+  text-shadow:
+     1px  1px 1px #fff,
+    -1px  1px 1px #fff,
+     1px -1px 1px #fff,
+    -1px -1px 1px #fff,
+     1px  0px 1px #fff,
+     0px  1px 1px #fff,
+    -1px  0px 1px #fff,
+     0px -1px 1px #fff;
+}
+#centerText > div {
+  position: relative;
+}
+#desc {
+  position: fixed;
+  z-index: 1099;
+  top: 10px;
+  right: 10px;
+  max-width: 400px;
+  padding: 10px;
+  text-align: right;
+  word-break: break-all;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  display: none;
+  font-size: 16px;
+  line-height:150%;
+}
+#footer {
+  display: none;
+  position: fixed;
+  z-index: 1098;
+  bottom: 10px;
+  left: 10px;
+  color: #666;
+}
+#showpanel {
+  cursor: pointer;
+  text-decoration: underline;
+}
+#usage {
+  display: none;
+  position: absolute;
+  z-index: 1101;
+  top: 50%;
+  left: 50%;
+  width: 800px;
+  height: 80%;
+  min-height: 500px;
+  max-height: 1000px;
+          transform: translate(-50%, -50%);
+  -webkit-transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 10px;
+}
+#usage_close {
+  font-size: 20px;
+  position: absolute;
+  display: block;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+}
+#usage_body {
+  position: absolute;
+  bottom: 10px;
+  padding: 5px;
+  width: calc(100% - 30px);
+  height: calc(100% - 70px);
+  overflow-y: auto;
+}
+</style>
+</head>
+<body>
+<div id="panel_wrapper">
+<span id="brand4panel"></span><br>
+<div id="panel">
+<button id="showusage">使い方</button><br>
+<label><input type="checkbox" id="toggleurl" unchecked>URL 自動生成</label><br>
+<label><input type="checkbox" id="togglemaniac" checked>詳細オプション</label><br>
+<label><input type="checkbox" id="hidepanel" unchecked>操作パネル非表示</label><br>
+<br>
+コンテンツ:<br>
+<select id="content"></select><br>
+<span id="videocontrol">
+<progress id="progress" value="0" min="0"></progress><br>
+<button id="videoplay">play/pause [space]</button><br>
+フレーム <button id="videoprev">|&lt;</button><button id="videonext">&gt;|</button><br>
+再生速度 <button id="videoslower">-</button><input type="text" id="videospeed" disabled><button id="videofaster">+</button><br>
+</span>
+<br>
+文字情報:<br>
+<label><input type="checkbox" id="toggledesc" checked>右上の説明</label><br>
+<label><input type="checkbox" id="togglecentertext" checked>中央に時刻表示</label><br>
+<br>
+補助線:<br>
+<label><input type="checkbox" id="outline" checked>輪郭</label>
+<label><input type="checkbox" id="latlines" checked>緯線</label>
+<label><input type="checkbox" id="lonlines" checked>経線</label><br>
+<label><input type="checkbox" id="tropic" checked>赤道・回帰線・極圏</label><br>
+<br>
+回転:<br>
+<table id="latlon">
+<tr><td class="tableright">lat = </td><td class="tableleft"><input type="text" id="lat"> [deg]</td></tr>
+<tr><td class="tableright">lon = </td><td class="tableleft"><input type="text" id="lon"> [deg]</td></tr>
+<tr><td class="tableright">&Delta;lon = </td><td class="tableleft"><input type="text" id="dlon"> [deg/s]</td></tr>
+</table>
+<button id="setrot">決定</button> <button id="resetrot">リセット</button><br>
+<button id="stopautorotate">自動回転ストップ</button><br>
+<br>
+ドラッグで回転:<br>
+<label><input type="checkbox" id="d2lat" unchecked>lat</label>
+<label><input type="checkbox" id="d2lon" checked>lon</label><br>
+<span class="maniac">
+<br>
+プロジェクタ位置:<br>
+<table id="position">
+<tr><td class="tableright">r = </td><td class="tableleft"><input type="text" id="r"> [cm]</td></tr>
+<tr><td class="tableright">x<sub>p</sub> = </td><td class="tableleft"><input type="text" id="xp"> [cm]</td></tr>
+<tr><td class="tableright">y<sub>p</sub> = </td><td class="tableleft"><input type="text" id="yp"> [cm]</td></tr>
+<tr><td class="tableright">p<sub>p</sub> = </td><td class="tableleft"><input type="text" id="pp"> [deg]</td></tr>
+<tr><td class="tableright">fov = </td><td class="tableleft"><input type="text" id="fov"> [deg]</td></tr>
+</table>
+<label><input type="checkbox" id="fovauto" checked>fov 自動設定</label><br>
+<button id="setpos">決定</button><br>
+<br>
+プリセット:<br>
+<span id="positionpresets"></span>
+<br>
+<table>
+<tr><td class="tableright">p<sub>n</sub> =</td><td class="tableleft"><input type="text" id="pn" disabled> [deg]</td></tr>
+<tr><td class="tableright">p<sub>s</sub> =</td><td class="tableleft"><input type="text" id="ps" disabled> [deg]</td></tr>
+<tr><td class="tableright">&Delta;p =</td><td class="tableleft"><input type="text" id="dp" disabled> [deg]</td></tr>
+</table>
+</span>
+</div>
+</div>
+<div id="footer">
+<span id="brand4footer"></span>
+<span id="showpanel">[show panel]</span>
+</div>
+<canvas id="canvasG"></canvas>
+<canvas id="canvasA"></canvas>
+<div id="desc"></div>
+<div id="centerText"></div>
+<div id="usage">
+<span id="usage_close">&#x274c;</span>
+<span id="brand4usage"></span><br>
+半球スクリーンへの背面投影のためのコンテンツ変形ツール
+<div id="usage_body">
+<h4>前提と値の説明</h4>
+<ul><li>半球スクリーンの半径を r とする
+</li><li>半球スクリーンは座標系に対して固定とし、球の中心を原点 (0, 0, 0) とする
+</li><li>原点から凸面に向かう方向を +x、半球上端に向かう方向を +y とする
+</li><li>Three.js に準じて +x を正面・+y を上としたときの右方向を +z とする（右手系）
+</li><li>プロジェクタの座標は投影光線の起点（≃ レンズ表面）とする
+</li><li>プロジェクタの姿勢の自由度 6 (x, y, z, pitch, roll, yaw) のうち z, roll, yaw は 0 固定とし、x, y, pitch の変位をそれぞれ x<sub>p</sub>, y<sub>p</sub>, p<sub>p</sub> とする
+</li><li>x<sub>p</sub> は -0.1r 以下（背面投影）もしくは 1.1r 以上（正面投影）
+</li><li>y<sub>p</sub> ∈ (-r, r)
+</li><li>p<sub>p</sub> ∈ [-30, 30]
+</li><li>fov ∈ (0, 180) は自動 or 手動で定義された視野角
+</li><li>p<sub>n</sub>, p<sub>s</sub> はプロジェクタの姿勢を基準とした投影上端・下端方向の pitch 角、&Delta;p はその差分 = 投影ビーム幅
+</li><li>lat, lon は半球凸点 (r, 0, 0) 上の緯度・経度、&Delta;lon は lon 方向の自動回転速度
+</li></ul>
+<h4>設営方法</h4>
+<ol><li>投影光線の上端・下端がスクリーンの上端・下端に一致するようにプロジェクタを配置する
+</li><li>x<sub>p</sub>, y<sub>p</sub>, p<sub>p</sub> を計測し、値をセットする
+</li><li>このページを全画面表示 (F11) して投影する
+</li></ol>
+<h4>コンテンツ追加方法</h4>
+<ol><li>任意の領域の等緯度経度座標系で作図されたコンテンツをこのページと同ディレクトリに配置する。画像でも動画でも良いが、ブラウザがネイティブで表示できるものである必要がある。画像は jpeg, png, 動画は H.264 で動作確認済
+</li><li>追加したコンテンツの情報を変数 contentsList に追記する
+</li></ol>
+<h4>リリースノート</h4>
+<ul><li>v20230523 公開
+</li><li>v20230525 GUI を日本語化
+</li></ul>
+</div>
+</div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.152.2/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.152.2/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+'use strict';
+
+import * as THREE from 'three';
+
+const Q = {};
+document.querySelectorAll('*').forEach(q => { if (q.id) Q[q.id] = q; });
+
+document.querySelectorAll('input[type=text]').forEach(q => q.setAttribute('autocomplete', 'off'));
+
+document.querySelectorAll('[id^=brand4]').forEach(q => q.textContent = document.title);
+
+const video = document.createElement('video');
+
+const contentsList = {
+  none: { // HTML 上の一意な value
+    // 以下は必須
+    text: 'なし', // HTML 上に表示されるテキスト
+    type: null,   // 'image', 'video' or null
+    path: null,   // 等緯度経度格子画像・動画のパスか URL
+    lonW: -180,   // 西端
+    lonE: 180,    // 東端
+    latS: -90,    // 北端
+    latN: 90,     // 南端
+    lonD: 0,      // デフォルト経度
+    latD: 0,      // デフォルト緯度
+    // 以下はオプション
+    dlonD: 0,            // デフォルト回転速度
+    desc: '',            // 右上の説明を HTML で
+    centerText: '',      // 中央のテキストを HTML で
+    resetRotation: true, // 読み込み時にデフォルト緯度経度へ強制リセット
+    // 以下は動画のみ、必要に応じて
+    fps: null,  // FPS
+    dtList: [], // 各フレームの観測時刻を Date 型で、ただし表示したいタイムゾーン上の時刻に Z を付けて UTC に偽装させる
+  },
+  earth: {
+    text: 'とりあえず地球',
+    type: 'image',
+    path: 'https://threejs-earth.s3.ap-northeast-1.amazonaws.com/earth.jpeg',
+    lonW: -180,
+    lonE: 180,
+    latS: -90,
+    latN: 90,
+    lonD: 140,
+    latD: 0,
+    desc: `
+      https://threejs-earth.s3.ap-northeast-1.amazonaws.com/earth.jpeg より引用<br>
+    `,
+  },
+  moon: {
+    text: 'とりあえず月',
+    type: 'image',
+    path: 'https://threejs-earth.s3.ap-northeast-1.amazonaws.com/2k_moon.jpeg',
+    lonW: -180,
+    lonE: 180,
+    latS: -90,
+    latN: 90,
+    lonD: 0,
+    latD: 0,
+    desc: `
+      https://threejs-earth.s3.ap-northeast-1.amazonaws.com/2k_moon.jpeg より引用<br>
+    `,
+  },
+};
+
+Object.keys(contentsList).forEach(c => {
+  const cc = contentsList[c];
+  const opt = document.createElement('option');
+  opt.value = c;
+  opt.text = (cc.type === 'video' ? '[動]' : '') + (cc.text || cc.path);
+  Q.content.appendChild(opt);
+});
+Q.content.value = 'image1';
+
+const positionPresets = {
+  default: {
+    text: 'default',
+    r: 39.2,
+    xp: -100,
+    yp: 0,
+    pp: 0,
+  },
+  wxl4960: {
+    text: 'RICOH WXL4960',
+    r: 39.2,
+    xp: -90,
+    yp: -30,
+    pp: -13,
+  },
+  geo: {
+    text: 'GEO-equivalent',
+    r: 39.2,
+    xp: 39.2 * (35786 + 6371) / 6371,
+    yp: 0,
+    pp: 0,
+  },
+  dscovr: {
+    text: 'DSCOVR-equivalent',
+    r: 39.2,
+    xp: 39.2 * 1500000 / 6371,
+    yp: 0,
+    pp: 0,
+  },
+};
+
+Object.keys(positionPresets).forEach(p => {
+  const button = document.createElement('button');
+  button.id = `positionpreset-${p}`;
+  button.innerText = positionPresets[p].text;
+  Q.positionpresets.appendChild(button);
+  Q.positionpresets.appendChild(document.createElement('br'));
+  button.addEventListener('click', () => usePresetPosition(p));
+});
+
+let setUrlWait = null;
+
+const setUrl = async () => {
+
+  if (setUrlWait) return false;
+  setUrlWait = true;
+  await new Promise(resolve => setTimeout(resolve, 200));
+  setUrlWait = false;
+
+  const currentState = location.href.split('?')[1];
+
+  if (!Q.toggleurl.checked) {
+    if (currentState === '') return true;
+    history.replaceState(null, null, location.href.split('?')[0]);
+    return true;
+  }
+
+  const params = [];
+  for (const id of Object.keys(Q)) {
+    const q = document.getElementById(id);
+    if (!q) continue;
+    if (q.disabled) continue;
+    if (q.tagName === 'INPUT' && q.getAttribute('type') === 'text') {
+      params.push(`${id}=${q.value}`);
+    } else if (q.tagName === 'SELECT') {
+      params.push(`${id}=${q.value}`);
+    } else if (q.tagName === 'INPUT' && q.getAttribute('type') === 'checkbox') {
+      params.push(`${id}=${q.checked ? 't' : 'f'}`);
+    } else {
+      continue;
+    }
+  }
+
+  const newState = params.join('&');
+  if (currentState === newState) return true;
+  history.replaceState(null, null, `${location.href.split('?')[0]}?${newState}`);
+
+}; // setUrl
+
+const date2str = (dt, moffset = 0, format = '%Y-%m-%dT%H:%M') => {
+
+  if (!(dt instanceof Date)) return '???';
+  const iso = new Date(dt.getTime() + moffset * 60000).toISOString();
+  return format
+    .replace('%Y', iso.slice(0, 4))
+    .replace('%m', iso.slice(5, 7))
+    .replace('%d', iso.slice(8, 10))
+    .replace('%H', iso.slice(11, 13))
+    .replace('%M', iso.slice(14, 16))
+    .replace('%S', iso.slice(17, 19));
+
+}; // date2str
+
+const modlat = lat => Math.min(89.9, Math.max(-89.9, Number(lat) || 0));
+
+const modlon = lon => {
+
+  const l = 0.5 + (Number(lon) || 0) / 360;
+  return 360 * (l - Math.floor(l)) - 180;
+
+}; // modlon
+
+const latlon2qt = (lat, lon) => {
+
+  const ct = Math.cos(lat * Math.PI / 360);
+  const st = Math.sin(lat * Math.PI / 360);
+  const cp = Math.cos(lon * Math.PI / 360);
+  const sp = Math.sin(lon * Math.PI / 360);
+  return new THREE.Quaternion(-1 * st * sp, -1 * ct * sp, -1 * st * cp, ct * cp);
+
+}; // latlon2qt
+
+const qt2latlon = qt => {
+
+  const x = qt._x;
+  const y = qt._y;
+  const z = qt._z;
+  const w = qt._w;
+  const lat = modlat((x ** 2 + y ** 2 > 0.5 ? Math.atan2(y, -x) : Math.atan2(w, z)) * 360 / Math.PI);
+  const lon = modlon((x ** 2 + z ** 2 > 0.5 ? Math.atan2(z, -x) : Math.atan2(w, y)) * 360 / Math.PI);
+  return [lat, lon];
+
+}; // qt2latlon
+
+const svgTag = (text, fontsize = 192, width = 3600, height = 1800) => `
+  <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+    <text x="1800" y="900" text-anchor="middle" dominant-baseline="central" style="stroke: #fff; stroke-width: 3px; fill: #000; font-size: ${fontsize}px;">${text}</text>
+  </svg>
+`;
+
+let w = window.innerWidth;
+let h = window.innerHeight;
+
+const sceneG = new THREE.Scene();
+const sceneA = new THREE.Scene();
+
+const cameraP = new THREE.PerspectiveCamera(80, w / h);
+cameraP.position.set(-3, 0, 0);
+cameraP.lookAt(new THREE.Vector3(0, 0, 0));
+
+const rendererG = new THREE.WebGLRenderer({
+  canvas: Q.canvasG,
+  alpha: true,
+  antialias: true,
+});
+//rendererG.localClippingEnabled = true;
+rendererG.outputColorSpace = THREE.LinearSRGBColorSpace; // hamatta
+rendererG.setPixelRatio(window.devicePixelRatio || 1);
+rendererG.setSize(w, h);
+
+const rendererA = new THREE.WebGLRenderer({
+  canvas: Q.canvasA,
+  alpha: true,
+  antialias: true,
+});
+//rendererA.localClippingEnabled = true;
+rendererA.outputColorSpace = THREE.LinearSRGBColorSpace;
+rendererA.setPixelRatio(window.devicePixelRatio || 1);
+rendererA.setSize(w, h);
+
+const plane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
+rendererG.clippingPlanes.push(plane);
+rendererA.clippingPlanes.push(plane);
+
+const rotatableG = new THREE.Group();
+const rotatableA = new THREE.Group();
+sceneG.add(rotatableG);
+sceneA.add(rotatableA);
+
+const annotations = {};
+
+annotations.outline = new THREE.Group();
+sceneA.add(annotations.outline);
+
+let outlineP = new THREE.Line();
+
+annotations.tropic = new THREE.Group();
+for (const lat of [-66.6, -23.4, 0, 23.4, 66.6]) {
+  const latr = lat * Math.PI / 180;
+  const line = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(
+      [...Array(181)]
+        .map((_, i) => 2 * i * Math.PI / 180)
+        .map(lonr => new THREE.Vector3(Math.cos(latr) * Math.cos(lonr), Math.sin(latr), Math.cos(latr) * Math.sin(lonr)))
+    ),
+    new THREE.LineBasicMaterial({
+      color: lat === 0 ? 0xff0000 : Math.abs(lat) < 30 ? 0xccbb66 : 0x66bbcc,
+      transparent: true,
+      opacity: 0.8,
+    })
+  );
+  annotations.tropic.add(line);
+}
+rotatableA.add(annotations.tropic);
+
+annotations.lonlines = new THREE.Group();
+for (let lon = 0; lon < 360; lon += 10) {
+  const lonr = lon * Math.PI / 180;
+  const line = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(
+      [...Array(181)]
+        .map((_, i) => (i - 90) * Math.PI / 180)
+        .map(latr => new THREE.Vector3(Math.cos(latr) * Math.cos(lonr), Math.sin(latr), Math.cos(latr) * Math.sin(lonr)))
+    ),
+    new THREE.LineBasicMaterial({
+      color: lon % 180 === 0 ? 0x00ff00 : 0x00cc00,
+      transparent: true,
+      opacity: lon % 30 === 0 ? 0.8 : 0.4,
+    })
+  );
+  annotations.lonlines.add(line);
+}
+rotatableA.add(annotations.lonlines);
+
+annotations.latlines = new THREE.Group();
+for (let lat = -80; lat <= 80; lat += 10) {
+  const latr = lat * Math.PI / 180;
+  const line = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(
+      [...Array(181)]
+        .map((_, i) => 2 * i * Math.PI / 180)
+        .map(lonr => new THREE.Vector3(Math.cos(latr) * Math.cos(lonr), Math.sin(latr), Math.cos(latr) * Math.sin(lonr)))
+    ),
+    new THREE.LineBasicMaterial({
+      color: lat === 0 ? 0xff0000 : 0xcc0000,
+      transparent: true,
+      opacity: lat % 30 === 0 ? 0.8 : 0.4,
+    })
+  );
+  annotations.latlines.add(line);
+}
+rotatableA.add(annotations.latlines);
+
+//const axes = new THREE.AxesHelper(5);
+//scene.add(axes);
+
+let lat = 0;
+let lon = 0;
+let dlon = 0;
+
+let timePrevRotation = null;
+
+const animate = () => {
+
+  requestAnimationFrame(animate);
+
+  const time = new Date().getTime();
+
+  if (dlon !== 0) {
+    if (timePrevRotation === null) timePrevRotation = time;
+    lon += dlon * (time - timePrevRotation) / 1000;
+    setRotation('variable');
+    timePrevRotation = time;
+  } else {
+    timePrevRotation = null;
+  }
+
+  rendererG.render(sceneG, cameraP);
+  rendererA.render(sceneA, cameraP);
+
+}; // animate
+
+window.addEventListener('resize', () => {
+
+  w = window.innerWidth;
+  h = window.innerHeight;
+
+  cameraP.aspect = w / h;
+  cameraP.updateProjectionMatrix();
+
+  rendererG.setSize(w, h);
+  rendererA.setSize(w, h);
+
+  setUrl();
+
+}); // resize
+
+let latDefault = 0;
+let lonDefault = 0;
+let dlonDefault = 0;
+
+const setRotation = (mode = 'query') => {
+
+  Q.setrot.disabled = mode === 'variable';
+  Q.stopautorotate.disabled = dlon === 0;
+
+  if (mode === 'reset') {
+    lat = latDefault || 0;
+    lon = lonDefault || 0;
+    dlon = dlonDefault || 0;
+  } else if (mode === 'query') {
+    Q.lat.value = Number(Q.lat.value).toFixed(1);
+    Q.lon.value = Number(Q.lon.value).toFixed(1);
+    Q.dlon.value = Number(Q.dlon.value).toFixed(1);
+    lat = Number(Q.lat.value);
+    lon = Number(Q.lon.value);
+    dlon = Number(Q.dlon.value);
+  }
+
+  lat = modlat(lat);
+  lon = modlon(lon);
+
+  const qt = latlon2qt(lat, lon);
+  rotatableG.setRotationFromQuaternion(qt);
+  rotatableA.setRotationFromQuaternion(qt);
+
+  Q.lat.value = lat.toFixed(1);
+  Q.lon.value = lon.toFixed(1);
+  Q.dlon.value = dlon.toFixed(1);
+
+  setUrl();
+
+}; // setRotation
+
+let dragStartX = 0;
+let dragStartY = 0;
+
+canvasA.addEventListener('mousemove', e => {
+
+  const dragX = e.clientX;
+  const dragY = e.clientY;
+  const dragDeltaX = dragX - dragStartX;
+  const dragDeltaY = dragY - dragStartY;
+  dragStartX = dragX;
+  dragStartY = dragY;
+
+  const ismousedown = e.buttons % 2 === 1;
+
+  if (!ismousedown) return true;
+
+  const isd2lat = Q.d2lat.checked;
+  const isd2lon = Q.d2lon.checked;
+
+  let isdragged = false;
+
+  if (isd2lat && ismousedown && dragDeltaY !== 0) {
+    const latrot = 0.2 * dragDeltaY;
+    const latnew = modlat(lat + latrot);
+    if (latnew !== lat) {
+      lat = latnew;
+      const qtnew = latlon2qt(lat, lon);
+      rotatableG.setRotationFromQuaternion(qtnew);
+      rotatableA.setRotationFromQuaternion(qtnew);
+      isdragged = true;
+    }
+  }
+
+  if (isd2lon && ismousedown && dragDeltaX !== 0) {
+    const lonrot = (Number(Q.xp.value) > 0 ? -1 : 1) * 0.2 * dragDeltaX;
+    lon = modlon(lon + lonrot);
+    const qtnew = latlon2qt(lat, lon);
+    rotatableG.setRotationFromQuaternion(qtnew);
+    rotatableA.setRotationFromQuaternion(qtnew);
+    isdragged = true;
+  }
+
+  if (!isdragged) return true;
+
+  Q.lat.value = lat.toFixed(1);
+  Q.lon.value = lon.toFixed(1);
+  setRotation('query');
+
+  setUrl();
+
+}); // mousemove
+
+let content;
+let fps = null;
+let funcEachVideoFrame;
+let progressChanged = false;
+
+const changeContent = () => {
+
+  Q.desc.innerHTML = '';
+  Q.desc.style.display = 'none';
+  Q.centerText.innerHTML = '';
+  Q.centerText.style.display = 'none';
+
+  if (video.src) video.removeAttribute('src');
+  video.load();
+
+  if (content) {
+
+    content.geometry.dispose();
+    content.material.dispose();
+    rotatableG.remove(content);
+    content = null;
+
+  }
+
+  fps = null;
+
+  if (funcEachVideoFrame) clearInterval(funcEachVideoFrame);
+
+  const contentProp = contentsList[Q.content.value];
+
+  lonDefault = contentProp.lonD;
+  latDefault = contentProp.latD;
+  dlonDefault = contentProp.dlonD || 0;
+
+  Q.videocontrol.style.display = contentProp.type === 'video' ? 'inline' : 'none';
+
+  if (contentProp.desc) {
+    Q.desc.innerHTML = contentProp.desc;
+    toggleDesc();
+  }
+  if (contentProp.centerText) {
+    Q.centerText.innerHTML = contentProp.centerText;
+    Q.centerText.style.display = 'block';
+  }
+  const qdts = document.getElementById('content-dtstart');
+  const qdte = document.getElementById('content-dtend');
+  if (qdts) qdts.textContent = date2str(contentProp.dtList[0]);
+  if (qdte) qdte.textContent = date2str(contentProp.dtList.at(-1));
+  document.querySelectorAll('[id^=content-]').forEach(q => {
+    const elem = q.id.replace('content-', '');
+    if (!contentProp[elem]) return false;
+    let text = contentProp[elem];
+    if (!text) return false;
+    if (text instanceof Date) text = date2str(text);
+    q.innerHTML = text;
+  });
+
+  if (contentProp.resetRotation) setRotation('reset');
+
+  if (!contentProp.type) return true;
+
+  let texture;
+
+  if (contentProp.type === 'video') {
+
+    video.src = contentProp.path;
+    video.loop = true;
+    video.muted = true;
+    video.addEventListener('loadedmetadata', () => Q.progress.setAttribute('max', video.duration));
+    video.load();
+
+    texture = new THREE.VideoTexture(video);
+
+    fps = contentProp.fps;
+
+  } else if (contentProp.type === 'image') {
+
+    texture = new THREE.TextureLoader().load(contentProp.path);
+
+  }
+
+  //texture.minFilter = THREE.NearestFilter;
+  //texture.magFilter = THREE.NearestFilter;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+
+  content = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      1, 64, 32,
+      (180 + contentProp.lonW) * Math.PI / 180,
+      (contentProp.lonE - contentProp.lonW) * Math.PI / 180,
+      (90 - contentProp.latN) * Math.PI / 180,
+      (contentProp.latN - contentProp.latS) * Math.PI / 180
+    ),
+    new THREE.MeshBasicMaterial({
+      //transparent: true,
+      side: THREE.DoubleSide,
+      map: texture,
+    })
+  );
+  rotatableG.add(content);
+
+  if (contentProp.type === 'video') {
+
+    toggleVideoPlay('play');
+    changeVideoRate(0);
+    const qdt = document.getElementById('content-dt');
+    funcEachVideoFrame = setInterval(() => {
+      Q.progress.value = video.currentTime;
+      if (qdt && fps) {
+        const framenum = Math.floor(video.currentTime * fps);
+        qdt.textContent = date2str(contentProp.dtList[framenum]);
+      }
+    },
+    Math.max(10, 0.1 * 1000 / fps));
+
+  }
+
+  setUrl();
+
+}; // changeContent
+
+const setPosition = () => {
+
+  Q.r.value = Number(Q.r.value).toFixed(1);
+  Q.xp.value = Number(Q.xp.value).toFixed(1);
+  Q.yp.value = Number(Q.yp.value).toFixed(1);
+  Q.pp.value = Number(Q.pp.value).toFixed(1);
+  const r = Number(Q.r.value);
+  const xp = Number(Q.xp.value);
+  const yp = Number(Q.yp.value);
+  const pp = Number(Q.pp.value);
+
+  document.querySelectorAll('.invalid').forEach(q => q.classList.remove('invalid'));
+
+  if (isNaN(xp) || 1000 * r < Math.abs(xp) || (-0.1 * r < xp && xp < 1.1 * r)) Q.xp.classList.add('invalid');
+  if (isNaN(yp) || r <= Math.abs(yp)) Q.yp.classList.add('invalid');
+  if (isNaN(pp) || 30 < Math.abs(pp)) Q.pp.classList.add('invalid');
+
+  if (document.querySelector('.invalid')) return false;
+
+  const signxp = xp > 0 ? 1 : -1;
+  cameraP.setViewOffset(w, h, 0, 0, w, h);
+  cameraP.position.x = xp / r;
+  cameraP.position.y = yp / r;
+  cameraP.setRotationFromQuaternion(latlon2qt(signxp * pp, signxp * -90));
+  cameraP.fov = 60;
+  cameraP.updateProjectionMatrix();
+  cameraP.updateMatrixWorld(true);
+
+  Q.centerText.style.transform = `scaleX(${signxp})`;
+
+  const vp = cameraP.position;
+
+  let vn = new THREE.Vector3(0, 1, 0);
+  let vs = new THREE.Vector3(0, -1, 0);
+  let vp2vn = vn.clone().sub(vp.clone());
+  let vp2vs = vs.clone().sub(vp.clone());
+
+  if (0 < xp) {
+    const t = Math.asin(1 / vp.length());
+    const vlen = vp.length() * Math.cos(t);
+    const t0 = Math.atan2(vp.y, vp.x);
+    const tn = t - t0;
+    const ts = -1 * t - t0;
+    vp2vn = new THREE.Vector3(-1 * Math.cos(tn), Math.sin(tn), 0).multiplyScalar(vlen);
+    vp2vs = new THREE.Vector3(-1 * Math.cos(ts), Math.sin(ts), 0).multiplyScalar(vlen);
+    vn = vp2vn.clone().add(vp.clone());
+    vs = vp2vs.clone().add(vp.clone());
+  }
+
+  const xnorm = new THREE.Vector3((xp < 0 ? 1 : -1), 0, 0);
+  const pn = (vp2vn.y > 0 ? 1 : -1) * vp2vn.angleTo(xnorm) * 180 / Math.PI - pp;
+  const ps = (vp2vs.y > 0 ? 1 : -1) * vp2vs.angleTo(xnorm) * 180 / Math.PI - pp;
+  Q.pn.value = pn.toFixed(1);
+  Q.ps.value = ps.toFixed(1);
+  Q.dp.value = (pn - ps).toFixed(1);
+
+  let planeNorm = new THREE.Vector3(1, 0, 0);
+  let planeOfs = 0;
+  const vc = vs.clone().add(vn.clone()).multiplyScalar(0.5);
+  if (vc.length() > 10 ** -5) {
+    planeNorm = vc.clone().normalize();
+    planeOfs = -1 * vc.length();
+  }
+  plane.set(planeNorm, planeOfs);
+
+  const vr = vn.clone().sub(vc.clone());
+  const vrl = vr.length();
+  if (outlineP) outlineP.clear();
+  outlineP = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(
+      [...Array(181)]
+        .map((_, i) => 2 * i * Math.PI / 180)
+        .map(i => new THREE.Vector3(
+          vc.x + vr.x * Math.cos(i) + 0.0001,
+          vc.y + vr.y * Math.cos(i),
+          vc.z + vrl * Math.sin(i)
+        ))
+    ),
+    new THREE.LineBasicMaterial({
+      color: 0xcccccc,
+      transparent: true,
+      opacity: 0.8,
+    })
+  );
+  outlineP.scale.set(1.002, 1.002, 1.002);
+  annotations.outline.clear();
+  annotations.outline.add(outlineP);
+
+  const vnp = vn.clone().project(cameraP);
+  const vsp = vs.clone().project(cameraP);
+
+  if (Q.fovauto.checked) {
+    const ynp = (1 - vnp.y) * h / 2;
+    const ysp = (1 - vsp.y) * h / 2;
+    cameraP.fov = 1.005 * Math.atan(Math.tan(cameraP.fov * Math.PI / 360) * (ysp - ynp) / h) * 360 / Math.PI;
+    cameraP.updateProjectionMatrix();
+    Q.fov.value = cameraP.fov.toFixed(1);
+  } else {
+    Q.fov.value = Math.min(170, Number(Q.fov.value) || 60).toFixed(1);
+    cameraP.fov = Number(Q.fov.value);
+  }
+  cameraP.updateProjectionMatrix();
+
+  const vcp = vnp.clone().add(vsp.clone()).multiplyScalar(0.5);
+  const ycp = (1 - vcp.y) * h / 2;
+  const dh = ycp - h / 2;
+  cameraP.setViewOffset(w, h, 0, dh, w, h);
+
+  setUrl();
+
+}; // setPosition
+
+const usePresetPosition = (preset, issetpos = true) => {
+
+  const p = positionPresets[preset];
+  if (p.r) Q.r.value = p.r.toFixed(1);
+  Q.xp.value = p.xp.toFixed(1);
+  Q.yp.value = p.yp.toFixed(1);
+  Q.pp.value = p.pp.toFixed(1);
+  if (issetpos) setPosition();
+
+}; // usePresetPosition
+
+const toggleFovAuto = (issetpos = true) => {
+
+  Q.fov.disabled = Q.fovauto.checked;
+  if (issetpos) setPosition();
+
+}; // toggleFovAuto
+
+const moveFrame = (deltaFrame) => {
+
+  if (!video.src) return true;
+  toggleVideoPlay('pause');
+  video.currentTime += deltaFrame / (fps || 1);
+
+}; // moveFrame
+
+const changeVideoRate = (arg = null) => {
+
+  if (!video.src) return true;
+  if (arg === null) return false;
+  const targetRate = video.playbackRate + arg;
+  if (targetRate < 0.25 || 4 < targetRate) return false;
+  video.playbackRate = targetRate;
+  Q.videospeed.value = targetRate.toFixed(2);
+
+}; // changeVideoRate
+
+const toggleVideoPlay = (state = null) => {
+
+  if (!video.src) return true;
+  if (state === null) state = video.paused ? 'play' : 'pause';
+  state === 'play' ? video.play() : video.pause();
+  const nextstate = state === 'play' ? 'pause' : 'play ';
+  Q.videoplay.innerHTML = `${nextstate}[space]`;
+
+}; // toggleVideoPlay
+
+const toggleAnnotation = (e) => {
+
+  const q = document.getElementById(e);
+  if (!q) return false;
+  annotations[e].visible = q.checked;
+  setUrl();
+
+}; // toggleAnnotation
+
+const toggleManiac = () => {
+
+  document.querySelectorAll('.maniac').forEach(q => { q.style.display = Q.togglemaniac.checked ? 'inline' : 'none'; });
+  setUrl();
+
+}; // toggleManiac
+
+const toggleDesc = (checked = null) => {
+
+  if (typeof checked === 'boolean') Q.toggledesc.checked = checked;
+  Q.desc.style.display = (Q.toggledesc.checked && Q.desc.innerHTML !== '') ? 'block' : 'none';
+  setUrl();
+
+}; // toggleDesc
+
+const toggleCenterText = (checked = null) => {
+
+  if (typeof checked === 'boolean') Q.togglecentertext.checked = checked;
+  Q.centerText.style.display = (Q.togglecentertext.checked && Q.centerText.innerHTML !== '') ? 'block' : 'none';
+  setUrl();
+
+}; // toggleCenterText
+
+const togglePanel = (state = null) => {
+
+  if (state === null) state = Q.hidepanel.checked;
+  Q.hidepanel.checked = state;
+  Q['panel_wrapper'].style.display = state ? 'none' : 'block';
+  Q.footer.style.display = state ? 'block' : 'none';
+  setUrl();
+
+}; // togglePanel
+
+const toggleUsage = (state = 'block') =>  Q.usage.style.display = state;
+
+const stopAutoRotate = () => {
+
+  dlon = 0;
+  Q.dlon.value = dlon.toFixed(1);
+  setRotation('query');
+
+}; // stopAutoRotate
+
+window.onload = () => {
+
+  document.body.addEventListener('keydown', e => {
+    if (e.key === ' ') {
+      toggleVideoPlay();
+      if (e.target === document.body) e.preventDefault();
+    }
+  }); // keydown
+
+  Q.showusage.addEventListener('click', () => toggleUsage('block'));
+  Q.toggleurl.addEventListener('change', () => setUrl());
+  Q.togglemaniac.addEventListener('change', () => toggleManiac());
+  Q.hidepanel.addEventListener('change', () => togglePanel());
+
+  Q.fovauto.addEventListener('change', () => toggleFovAuto());
+  Q.setpos.addEventListener('click', () => setPosition());
+
+  Q.setrot.addEventListener('click', () => setRotation('query'));
+  Q.resetrot.addEventListener('click', () => setRotation('reset'));
+  Q.stopautorotate.addEventListener('click', () => stopAutoRotate());
+
+  Q.content.addEventListener('change', () => changeContent());
+
+  Q.progress.addEventListener('click', e => {
+    const rect = progress.getBoundingClientRect();
+    const pos = (e.pageX - rect.left) / progress.offsetWidth;
+    video.currentTime = pos * video.duration;
+  });
+  Q.videoplay.addEventListener('click', () => toggleVideoPlay());
+  Q.videoprev.addEventListener('click', () => moveFrame(-1));
+  Q.videonext.addEventListener('click', () => moveFrame(1));
+  Q.videoslower.addEventListener('click', () => changeVideoRate(-0.25));
+  Q.videofaster.addEventListener('click', () => changeVideoRate(0.25));
+
+  Q.toggledesc.addEventListener('change', () => toggleDesc());
+  Q.togglecentertext.addEventListener('change', () => toggleCenterText());
+  Object.keys(annotations).forEach(a => Q[a].addEventListener('change', () => toggleAnnotation(a)));
+
+  Q.showpanel.addEventListener('click', () => togglePanel(false));
+
+  Q['usage_close'].addEventListener('click', () => toggleUsage('none'));
+
+  document.querySelectorAll('input[type=checkbox]').forEach(q => addEventListener('change', e => q.blur()));
+  document.querySelectorAll('button').forEach(q => addEventListener('click', e => q.blur()));
+
+  const params = {};
+  (location.href.split('?').at(-1) || '').split('&').forEach(l => {
+    const [key, val] = l.split('=');
+    params[key] = val;
+  });
+
+  for (const [id, v] of Object.entries(params)) {
+    const q = document.getElementById(id);
+    if (!q) continue;
+    if (q.tagName === 'INPUT' && q.getAttribute('type') === 'text') {
+      q.value = v;
+    } else if (q.tagName === 'SELECT') {
+      q.value = v;
+    } else if (q.tagName === 'INPUT' && q.getAttribute('type') === 'checkbox') {
+      q.checked = v === 't';
+    } else {
+      continue;
+    }
+  }
+
+  toggleManiac();
+  togglePanel();
+
+  changeContent();
+
+  toggleFovAuto(false);
+  Object.keys(annotations).forEach(a => toggleAnnotation(a));
+
+  if (!params.lon) setRotation('reset');
+  if (!params.xp) usePresetPosition('default');
+
+  setRotation('query');
+  setPosition();
+
+  animate();
+
+}; // window.onload
+</script>
+</body>
+</html>
