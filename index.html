@@ -270,7 +270,8 @@ input[type=text] {
 </li><li>lat, lon は半球凸点 (r, 0, 0) 上の緯度・経度、&Delta;lon は lon 方向の自動回転速度
 </li></ul>
 <h4>設営方法</h4>
-<ol><li>投影光線の上端・下端がスクリーンの上端・下端に一致するようにプロジェクタを配置する
+<ol><li>プロジェクタの台形補正機能はオフにしておく
+</li><li>投影光線の上端・下端がスクリーンの上端・下端に一致するようにプロジェクタを配置する
 </li><li>x<sub>p</sub>, y<sub>p</sub>, p<sub>p</sub> を計測し、値をセットする
 </li><li>このページを全画面表示 (F11) して投影する
 </li></ol>
@@ -434,8 +435,6 @@ const setUrl = async () => {
       params.push(`${id}=${q.value}`);
     } else if (q.tagName === 'INPUT' && q.getAttribute('type') === 'checkbox') {
       params.push(`${id}=${q.checked ? 't' : 'f'}`);
-    } else {
-      continue;
     }
   }
 
@@ -494,44 +493,44 @@ const svgTag = (text, fontsize = 192, width = 3600, height = 1800) => `
   <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
     <text x="1800" y="900" text-anchor="middle" dominant-baseline="central" style="stroke: #fff; stroke-width: 3px; fill: #000; font-size: ${fontsize}px;">${text}</text>
   </svg>
-`;
+`; // svgTag
 
 let w = window.innerWidth;
 let h = window.innerHeight;
 
-const sceneG = new THREE.Scene();
-const sceneA = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, w / h);
+camera.position.set(-3, 0, 0);
+camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-const cameraP = new THREE.PerspectiveCamera(80, w / h);
-cameraP.position.set(-3, 0, 0);
-cameraP.lookAt(new THREE.Vector3(0, 0, 0));
+const plane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
 
 const rendererG = new THREE.WebGLRenderer({
   canvas: Q.canvasG,
   alpha: true,
   antialias: true,
 });
-//rendererG.localClippingEnabled = true;
-rendererG.outputColorSpace = THREE.LinearSRGBColorSpace; // hamatta
-rendererG.setPixelRatio(window.devicePixelRatio || 1);
-rendererG.setSize(w, h);
 
 const rendererA = new THREE.WebGLRenderer({
   canvas: Q.canvasA,
   alpha: true,
   antialias: true,
 });
-//rendererA.localClippingEnabled = true;
-rendererA.outputColorSpace = THREE.LinearSRGBColorSpace;
-rendererA.setPixelRatio(window.devicePixelRatio || 1);
-rendererA.setSize(w, h);
 
-const plane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
 rendererG.clippingPlanes.push(plane);
 rendererA.clippingPlanes.push(plane);
+rendererG.outputColorSpace = THREE.LinearSRGBColorSpace; // hamatta
+rendererA.outputColorSpace = THREE.LinearSRGBColorSpace;
+rendererG.setPixelRatio(window.devicePixelRatio || 1);
+rendererA.setPixelRatio(window.devicePixelRatio || 1);
+rendererG.setSize(w, h);
+rendererA.setSize(w, h);
+
+const sceneG = new THREE.Scene();
+const sceneA = new THREE.Scene();
 
 const rotatableG = new THREE.Group();
 const rotatableA = new THREE.Group();
+
 sceneG.add(rotatableG);
 sceneA.add(rotatableA);
 
@@ -540,7 +539,7 @@ const annotations = {};
 annotations.outline = new THREE.Group();
 sceneA.add(annotations.outline);
 
-let outlineP = new THREE.Line();
+let outline = new THREE.Line();
 
 annotations.tropic = new THREE.Group();
 for (const lat of [-66.6, -23.4, 0, 23.4, 66.6]) {
@@ -599,9 +598,6 @@ for (let lat = -80; lat <= 80; lat += 10) {
 }
 rotatableA.add(annotations.latlines);
 
-//const axes = new THREE.AxesHelper(5);
-//scene.add(axes);
-
 let lat = 0;
 let lon = 0;
 let dlon = 0;
@@ -623,8 +619,8 @@ const animate = () => {
     timePrevRotation = null;
   }
 
-  rendererG.render(sceneG, cameraP);
-  rendererA.render(sceneA, cameraP);
+  rendererG.render(sceneG, camera);
+  rendererA.render(sceneA, camera);
 
 }; // animate
 
@@ -633,8 +629,8 @@ window.addEventListener('resize', () => {
   w = window.innerWidth;
   h = window.innerHeight;
 
-  cameraP.aspect = w / h;
-  cameraP.updateProjectionMatrix();
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
 
   rendererG.setSize(w, h);
   rendererA.setSize(w, h);
@@ -813,8 +809,6 @@ const changeContent = () => {
 
   }
 
-  //texture.minFilter = THREE.NearestFilter;
-  //texture.magFilter = THREE.NearestFilter;
   texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;
 
@@ -874,17 +868,17 @@ const setPosition = () => {
   if (document.querySelector('.invalid')) return false;
 
   const signxp = xp > 0 ? 1 : -1;
-  cameraP.setViewOffset(w, h, 0, 0, w, h);
-  cameraP.position.x = xp / r;
-  cameraP.position.y = yp / r;
-  cameraP.setRotationFromQuaternion(latlon2qt(signxp * pp, signxp * -90));
-  cameraP.fov = 60;
-  cameraP.updateProjectionMatrix();
-  cameraP.updateMatrixWorld(true);
+  camera.setViewOffset(w, h, 0, 0, w, h);
+  camera.position.x = xp / r;
+  camera.position.y = yp / r;
+  camera.setRotationFromQuaternion(latlon2qt(signxp * pp, signxp * -90));
+  camera.fov = 60;
+  camera.updateProjectionMatrix();
+  camera.updateMatrixWorld(true);
 
   Q.centerText.style.transform = `scaleX(${signxp})`;
 
-  const vp = cameraP.position;
+  const vp = camera.position;
 
   let vn = new THREE.Vector3(0, 1, 0);
   let vs = new THREE.Vector3(0, -1, 0);
@@ -921,8 +915,8 @@ const setPosition = () => {
 
   const vr = vn.clone().sub(vc.clone());
   const vrl = vr.length();
-  if (outlineP) outlineP.clear();
-  outlineP = new THREE.Line(
+  if (outline) outline.clear();
+  outline = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints(
       [...Array(181)]
         .map((_, i) => 2 * i * Math.PI / 180)
@@ -938,29 +932,31 @@ const setPosition = () => {
       opacity: 0.8,
     })
   );
-  outlineP.scale.set(1.002, 1.002, 1.002);
+  outline.scale.set(1.002, 1.002, 1.002);
   annotations.outline.clear();
-  annotations.outline.add(outlineP);
+  annotations.outline.add(outline);
 
-  const vnp = vn.clone().project(cameraP);
-  const vsp = vs.clone().project(cameraP);
+  let vnp = vn.clone().project(camera);
+  let vsp = vs.clone().project(camera);
 
   if (Q.fovauto.checked) {
     const ynp = (1 - vnp.y) * h / 2;
     const ysp = (1 - vsp.y) * h / 2;
-    cameraP.fov = 1.005 * Math.atan(Math.tan(cameraP.fov * Math.PI / 360) * (ysp - ynp) / h) * 360 / Math.PI;
-    cameraP.updateProjectionMatrix();
-    Q.fov.value = cameraP.fov.toFixed(1);
+    camera.fov = 1.005 * Math.atan(Math.tan(camera.fov * Math.PI / 360) * (ysp - ynp) / h) * 360 / Math.PI;
+    camera.updateProjectionMatrix();
+    Q.fov.value = camera.fov.toFixed(1);
   } else {
     Q.fov.value = Math.min(170, Number(Q.fov.value) || 60).toFixed(1);
-    cameraP.fov = Number(Q.fov.value);
+    camera.fov = Number(Q.fov.value);
   }
-  cameraP.updateProjectionMatrix();
+  camera.updateProjectionMatrix();
 
+  vnp = vn.clone().project(camera);
+  vsp = vs.clone().project(camera);
   const vcp = vnp.clone().add(vsp.clone()).multiplyScalar(0.5);
   const ycp = (1 - vcp.y) * h / 2;
   const dh = ycp - h / 2;
-  cameraP.setViewOffset(w, h, 0, dh, w, h);
+  camera.setViewOffset(w, h, 0, dh, w, h);
 
   setUrl();
 
@@ -1089,8 +1085,8 @@ window.onload = () => {
   Q.content.addEventListener('change', () => changeContent());
 
   Q.progress.addEventListener('click', e => {
-    const rect = progress.getBoundingClientRect();
-    const pos = (e.pageX - rect.left) / progress.offsetWidth;
+    const rect = Q.progress.getBoundingClientRect();
+    const pos = (e.pageX - rect.left) / Q.progress.offsetWidth;
     video.currentTime = pos * video.duration;
   });
   Q.videoplay.addEventListener('click', () => toggleVideoPlay());
@@ -1125,8 +1121,6 @@ window.onload = () => {
       q.value = v;
     } else if (q.tagName === 'INPUT' && q.getAttribute('type') === 'checkbox') {
       q.checked = v === 't';
-    } else {
-      continue;
     }
   }
 
