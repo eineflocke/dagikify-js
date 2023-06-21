@@ -5,7 +5,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta name="robots" content="noindex,nofollow">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1, shrink-to-fit=no">
 <title>Dagikify.js v20230621</title>
 <style>
 html {
@@ -229,7 +229,22 @@ input[type=text] {
 </span>
 </span>
 <br>
+回転:<br>
+<table id="latlon">
+<tr><td class="tableright">lat = </td><td class="tableleft"><input type="text" id="lat"> [deg]</td></tr>
+<tr><td class="tableright">lon = </td><td class="tableleft"><input type="text" id="lon"> [deg]</td></tr>
+<tr class="maniac"><td class="tableright">&Delta;lon = </td><td class="tableleft"><input type="text" id="dlon"> [deg/s]</td></tr>
+</table>
+<button id="setrot">決定</button><button id="resetrot">リセット</button><br>
 <span class="maniac">
+回転速度 <button id="rotslower">-</button><button id="rotfaster">+</button><button id="stopautorotate">停止</button><br>
+</span>
+<br>
+ドラッグ・タッチで回転:<br>
+<label><input type="checkbox" id="d2lat" checked>lat</label>
+<label><input type="checkbox" id="d2lon" checked>lon</label><br>
+<span class="maniac">
+<br>
 文字情報:<br>
 <label><input type="checkbox" id="toggledesc" checked>右上説明</label>
 <label><input type="checkbox" id="togglecentertext" checked>図中</label><br>
@@ -240,23 +255,6 @@ input[type=text] {
 <label><input type="checkbox" id="lonlines" checked>経線</label><br>
 <label><input type="checkbox" id="tropic" checked>赤道・回帰線・極圏</label><br>
 <br>
-</span>
-回転:<br>
-<table id="latlon">
-<tr><td class="tableright">lat = </td><td class="tableleft"><input type="text" id="lat"> [deg]</td></tr>
-<tr><td class="tableright">lon = </td><td class="tableleft"><input type="text" id="lon"> [deg]</td></tr>
-<tr class="maniac"><td class="tableright">&Delta;lon = </td><td class="tableleft"><input type="text" id="dlon"> [deg/s]</td></tr>
-</table>
-<button id="setrot">決定</button> <button id="resetrot">リセット</button><br>
-<span class="maniac">
-回転速度 <button id="rotslower">-</button><button id="rotfaster">+</button><button id="stopautorotate">停止</button><br>
-</span>
-<br>
-ドラッグ・タッチで回転:<br>
-<label><input type="checkbox" id="d2lat" checked>lat</label>
-<label><input type="checkbox" id="d2lon" checked>lon</label><br>
-<span class="maniac">
-<br>
 プロジェクタ位置:<br>
 <table id="position">
 <tr><td class="tableright">r = </td><td class="tableleft"><input type="text" id="r"> [cm]</td></tr>
@@ -265,16 +263,10 @@ input[type=text] {
 <tr><td class="tableright">p<sub>p</sub> = </td><td class="tableleft"><input type="text" id="pp"> [deg]</td></tr>
 <tr><td class="tableright">fov = </td><td class="tableleft"><input type="text" id="fov"> [deg]</td></tr>
 </table>
-<label><input type="checkbox" id="fovauto" checked>fov 自動設定</label><br>
-<button id="setpos">決定</button><br>
+<button id="setpos">決定</button><label><input type="checkbox" id="fovauto" checked>fov 自動設定</label><br>
 <br>
 プリセット:<br>
 <span id="positionpresets"></span>
-<table style="display: none;">
-<tr><td class="tableright">p<sub>n</sub> =</td><td class="tableleft"><input type="text" id="pn" disabled> [deg]</td></tr>
-<tr><td class="tableright">p<sub>s</sub> =</td><td class="tableleft"><input type="text" id="ps" disabled> [deg]</td></tr>
-<tr><td class="tableright">&Delta;p =</td><td class="tableleft"><input type="text" id="dp" disabled> [deg]</td></tr>
-</table>
 <br>
 左右反転:<br>
 <select id="mirror">
@@ -994,13 +986,6 @@ const setPosition = () => {
     vn = vp2vn.clone().add(vp.clone());
     vs = vp2vs.clone().add(vp.clone());
   }
-
-  const xnorm = new THREE.Vector3((xp < 0 ? 1 : -1), 0, 0);
-  const pn = (vp2vn.y > 0 ? 1 : -1) * vp2vn.angleTo(xnorm) * 180 / Math.PI - pp;
-  const ps = (vp2vs.y > 0 ? 1 : -1) * vp2vs.angleTo(xnorm) * 180 / Math.PI - pp;
-  Q.pn.value = pn.toFixed(1);
-  Q.ps.value = ps.toFixed(1);
-  Q.dp.value = (pn - ps).toFixed(1);
 
   let planeNorm = new THREE.Vector3(1, 0, 0);
   let planeOfs = 0;
