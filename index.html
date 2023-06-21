@@ -6,8 +6,12 @@
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta name="robots" content="noindex,nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dagikify.js v20230525</title>
+<title>Dagikify.js v20230621</title>
 <style>
+html {
+  overflow: hidden;
+  overscroll-behavior: none; /* to disable iOS pull-to-refresh */
+}
 body {
   margin: 0;
   padding: 0;
@@ -16,31 +20,53 @@ body {
 body, input, button, select {
   font-size: 14px;
   color: #333;
-  font-family: Consolas, Meiryo, '游ゴシック', monospace;
+  font-family: Meiryo, '游ゴシック', 'Hiragino Kaku Gothic Pro', sans-serif;
+}
+input[type=text], #centerText {
+  font-family: Consolas, Menlo, Meiryo, '游ゴシック', 'Hiragino Kaku Gothic Pro', monospace;
+}
+button, input[type=text], select {
+  border-radius: 5px;
+  padding: 2px;
+}
+button {
+  border: 1px solid #bbb;
+  background-color: #eee;
+  padding: 2px 6px 2px; /* t lr b */
+  min-width: 25px;
+}
+button:disabled {
+  background-color: #ccc;
+}
+button:not(:disabled):hover {
+  background-color: #fff;
+  cursor: pointer;
 }
 #panel_wrapper {
   z-index: 1100;
   position: fixed;
-  top: 10px;
-  left: 10px;
-  width: 200px;
-  max-height: calc(100vh - 20px);
-  padding: 10px;
+  width: 190px;
+  max-height: 100vh;
+  max-height: 100dvh;
+  padding: 10px 5px 10px 10px; /* t r b l */
+  margin: 10px;
   background-color: rgba(255, 255, 255, 0.8);
   border-radius: 10px;
 }
+#brand4panel {
+  display: inline-block;
+  height: 30px;
+}
 #panel {
   position: relative;
-  padding-right: 5px;
-  padding-top: 5px;
-  margin-top: 5px;
   max-height: calc(100vh - 70px);
+  max-height: calc(100dvh - 70px);
   overflow-y: auto;
 }
 #brand4panel, #brand4footer, #brand4usage {
   font-weight: 700;
 }
-input[type=checkbox], label, button {
+input[type=checkbox], label {
   cursor: pointer;
 }
 table {
@@ -54,17 +80,20 @@ table {
 }
 input[type=text] {
   width: 50px;
-  padding: 2px;
   border: 1px solid #aaa;
   text-align: right;
 }
 .invalid {
   background-color: #fdd;
 }
+#videoplay {
+  cursor: pointer;
+  font-size: 24px;
+}
 #progress {
-  width: 150px;
-  height: 10px;
-  margin: 5px;
+  width: 130px;
+  height: 15px;
+  margin: 3px;
   cursor: pointer;
   border-radius: 0;
   -webkit-appearance: none;
@@ -122,15 +151,18 @@ input[type=text] {
   z-index: 1099;
   top: 10px;
   right: 10px;
-  max-width: 400px;
+  max-width: 250px;
   padding: 10px;
-  text-align: right;
+  text-align: center;
   word-break: break-all;
   background-color: rgba(255, 255, 255, 0.8);
   border-radius: 10px;
   display: none;
-  font-size: 16px;
+  font-size: 12px;
   line-height:150%;
+}
+#desc strong {
+  font-size: 16px;
 }
 #footer {
   display: none;
@@ -182,23 +214,25 @@ input[type=text] {
 <div id="panel_wrapper">
 <span id="brand4panel"></span><br>
 <div id="panel">
-<button id="showusage">使い方</button><br>
-<label><input type="checkbox" id="toggleurl" unchecked>URL 自動生成</label><br>
+<span class="maniac"><button id="showusage">使い方</button><br></span>
 <label><input type="checkbox" id="togglemaniac" checked>詳細オプション</label><br>
-<label><input type="checkbox" id="hidepanel" unchecked>操作パネル非表示</label><br>
+<label class="maniac"><input type="checkbox" id="toggleurl" unchecked>URL 自動生成<br></label>
+<label class="maniac"><input type="checkbox" id="hidepanel" unchecked>操作パネル非表示<br></label>
 <br>
 コンテンツ:<br>
 <select id="content"></select><br>
 <span id="videocontrol">
-<progress id="progress" value="0" min="0"></progress><br>
-<button id="videoplay">play/pause [space]</button><br>
+<span id="videoplay"></span><progress id="progress" value="0" min="0"></progress><br>
+<span class="maniac">
 フレーム <button id="videoprev">|&lt;</button><button id="videonext">&gt;|</button><br>
 再生速度 <button id="videoslower">-</button><input type="text" id="videospeed" disabled><button id="videofaster">+</button><br>
 </span>
+</span>
 <br>
+<span class="maniac">
 文字情報:<br>
-<label><input type="checkbox" id="toggledesc" checked>右上の説明</label><br>
-<label><input type="checkbox" id="togglecentertext" checked>中央に時刻表示</label><br>
+<label><input type="checkbox" id="toggledesc" checked>右上説明</label>
+<label><input type="checkbox" id="togglecentertext" checked>図中</label><br>
 <br>
 補助線:<br>
 <label><input type="checkbox" id="outline" checked>輪郭</label>
@@ -206,16 +240,19 @@ input[type=text] {
 <label><input type="checkbox" id="lonlines" checked>経線</label><br>
 <label><input type="checkbox" id="tropic" checked>赤道・回帰線・極圏</label><br>
 <br>
+</span>
 回転:<br>
 <table id="latlon">
 <tr><td class="tableright">lat = </td><td class="tableleft"><input type="text" id="lat"> [deg]</td></tr>
 <tr><td class="tableright">lon = </td><td class="tableleft"><input type="text" id="lon"> [deg]</td></tr>
-<tr><td class="tableright">&Delta;lon = </td><td class="tableleft"><input type="text" id="dlon"> [deg/s]</td></tr>
+<tr class="maniac"><td class="tableright">&Delta;lon = </td><td class="tableleft"><input type="text" id="dlon"> [deg/s]</td></tr>
 </table>
 <button id="setrot">決定</button> <button id="resetrot">リセット</button><br>
-<button id="stopautorotate">自動回転ストップ</button><br>
+<span class="maniac">
+回転速度 <button id="rotslower">-</button><button id="rotfaster">+</button><button id="stopautorotate">停止</button><br>
+</span>
 <br>
-ドラッグで回転:<br>
+ドラッグ・タッチで回転:<br>
 <label><input type="checkbox" id="d2lat" unchecked>lat</label>
 <label><input type="checkbox" id="d2lon" checked>lon</label><br>
 <span class="maniac">
@@ -233,12 +270,18 @@ input[type=text] {
 <br>
 プリセット:<br>
 <span id="positionpresets"></span>
-<br>
-<table>
+<table style="display: none;">
 <tr><td class="tableright">p<sub>n</sub> =</td><td class="tableleft"><input type="text" id="pn" disabled> [deg]</td></tr>
 <tr><td class="tableright">p<sub>s</sub> =</td><td class="tableleft"><input type="text" id="ps" disabled> [deg]</td></tr>
 <tr><td class="tableright">&Delta;p =</td><td class="tableleft"><input type="text" id="dp" disabled> [deg]</td></tr>
 </table>
+<br>
+左右反転:<br>
+<select id="mirror">
+<option value="auto" selected>自動判定</option>
+<option value="normal">常に正対</option>
+<option value="mirror">常に左右反転</option>
+</select>
 </span>
 </div>
 </div>
@@ -265,8 +308,8 @@ input[type=text] {
 </li><li>x<sub>p</sub> は -0.1r 以下（背面投影）もしくは 1.1r 以上（正面投影）
 </li><li>y<sub>p</sub> ∈ (-r, r)
 </li><li>p<sub>p</sub> ∈ [-30, 30]
-</li><li>fov ∈ (0, 180) は自動 or 手動で定義された視野角
-</li><li>p<sub>n</sub>, p<sub>s</sub> はプロジェクタの姿勢を基準とした投影上端・下端方向の pitch 角、&Delta;p はその差分 = 投影ビーム幅
+</li><li>fov ∈ (0, 170] は自動 or 手動で定義された視野角
+<!--</li><li>p<sub>n</sub>, p<sub>s</sub> はプロジェクタの姿勢を基準とした投影上端・下端方向の pitch 角、&Delta;p はその差分 = 投影ビーム幅-->
 </li><li>lat, lon は半球凸点 (r, 0, 0) 上の緯度・経度、&Delta;lon は lon 方向の自動回転速度
 </li></ul>
 <h4>設営方法</h4>
@@ -282,6 +325,7 @@ input[type=text] {
 <h4>リリースノート</h4>
 <ul><li>v20230523 公開
 </li><li>v20230525 GUI を日本語化
+</li><li>v20230621 タッチ操作に対応
 </li></ul>
 </div>
 </div>
@@ -308,25 +352,49 @@ document.querySelectorAll('[id^=brand4]').forEach(q => q.textContent = document.
 const video = document.createElement('video');
 
 const contentsList = {
-  none: { // HTML 上の一意な value
+  /*
+  sample: { // HTML 上の一意な value
     // 以下は必須
-    text: 'なし', // HTML 上に表示されるテキスト
-    type: null,   // 'image', 'video' or null
-    path: null,   // 等緯度経度格子画像・動画のパスか URL
-    lonW: -180,   // 西端
-    lonE: 180,    // 東端
-    latS: -90,    // 北端
-    latN: 90,     // 南端
-    lonD: 0,      // デフォルト経度
-    latD: 0,      // デフォルト緯度
+    text: 'サンプル',         // HTML 上に表示されるテキスト
+    type: 'video',            // 'image' | 'video'
+    path: 'path/to/file.mp4', // 等緯度経度格子コンテンツのパスか URL
+    lonW: -180,               // コンテンツ西端
+    lonE: 180,                // コンテンツ東端
+    latS: -90,                // コンテンツ南端
+    latN: 90,                 // コンテンツ北端
+    lonD: 0,                  // デフォルト経度
+    latD: 0,                  // デフォルト緯度
     // 以下はオプション
-    dlonD: 0,            // デフォルト回転速度
-    desc: '',            // 右上の説明を HTML で
-    centerText: '',      // 中央のテキストを HTML で
+    dlonD: 0,            // デフォルト自動回転速度
     resetRotation: true, // 読み込み時にデフォルト緯度経度へ強制リセット
-    // 以下は動画のみ、必要に応じて
-    fps: null,  // FPS
-    dtList: [], // 各フレームの観測時刻を Date 型で、ただし表示したいタイムゾーン上の時刻に Z を付けて UTC に偽装させる
+    // 右上の説明を HTML で記載する
+    // #content-dt は動画フレームに対応する時刻、#content-dt{start,end} は動画の {開始,終了} 時刻に自動で読み替えられる
+    desc: `
+      <strong>サンプル</strong><br>
+      始端: <span id="content-dtstart"></span> (UTC)<br>
+      終端: <span id="content-dtend"></span> (UTC)<br>
+    `,
+    // 図中のテキストを HTML で記載する
+    centerText: `
+      <div style="top: 70vh; top: 70dvh;"><span id="content-dt"></span> (UTC)</div>
+    `,
+    fps: null, // 動画の FPS
+    // 動画各フレームの観測時刻、ただし表示したいタイムゾーン上の時刻に Z を付けて UTC に偽装させること
+    dtList: [...Array(144)]
+      .map((_, i) => i * 10 * 60 * 1000)
+      .map(i => new Date(new Date('2023-01-01T00:00Z').getTime() + i)),
+  },
+  */
+  none: {
+    text: 'なし',
+    type: null,
+    path: null,
+    lonW: -180,
+    lonE: 180,
+    latS: -90,
+    latN: 90,
+    lonD: 0,
+    latD: 0,
   },
   earth: {
     text: 'とりあえず地球',
@@ -339,7 +407,7 @@ const contentsList = {
     lonD: 140,
     latD: 0,
     desc: `
-      https://threejs-earth.s3.ap-northeast-1.amazonaws.com/earth.jpeg より引用<br>
+      https://threejs-earth.s3.ap-northeast-1.amazonaws.com/earth.jpeg より引用
     `,
   },
   moon: {
@@ -352,8 +420,9 @@ const contentsList = {
     latN: 90,
     lonD: 0,
     latD: 0,
+    resetRotation: true,
     desc: `
-      https://threejs-earth.s3.ap-northeast-1.amazonaws.com/2k_moon.jpeg より引用<br>
+      https://threejs-earth.s3.ap-northeast-1.amazonaws.com/2k_moon.jpeg より引用
     `,
   },
 };
@@ -365,7 +434,7 @@ Object.keys(contentsList).forEach(c => {
   opt.text = (cc.type === 'video' ? '[動]' : '') + (cc.text || cc.path);
   Q.content.appendChild(opt);
 });
-Q.content.value = 'earth';
+Q.content.value = Object.keys(contentsList)[1];
 
 const positionPresets = {
   default: {
@@ -375,24 +444,15 @@ const positionPresets = {
     yp: 0,
     pp: 0,
   },
-  wxl4960: {
-    text: 'RICOH WXL4960',
-    r: 39.2,
-    xp: -90,
-    yp: -30,
-    pp: -13,
-  },
   geo: {
     text: 'GEO-equivalent',
-    r: 39.2,
-    xp: 39.2 * (35786 + 6371) / 6371,
+    xp: r => (Number(r) || 10) * (35786 + 6371) / 6371,
     yp: 0,
     pp: 0,
   },
   dscovr: {
     text: 'DSCOVR-equivalent',
-    r: 39.2,
-    xp: 39.2 * 1500000 / 6371,
+    xp: (r) => (Number(r) || 10) * 1500000 / 6371,
     yp: 0,
     pp: 0,
   },
@@ -642,11 +702,9 @@ window.addEventListener('resize', () => {
 let latDefault = 0;
 let lonDefault = 0;
 let dlonDefault = 0;
+const rotSpeedLimit = 100;
 
 const setRotation = (mode = 'query') => {
-
-  Q.setrot.disabled = mode === 'variable';
-  Q.stopautorotate.disabled = dlon === 0;
 
   if (mode === 'reset') {
     lat = latDefault || 0;
@@ -672,6 +730,12 @@ const setRotation = (mode = 'query') => {
   Q.lon.value = lon.toFixed(1);
   Q.dlon.value = dlon.toFixed(1);
 
+  if (Math.abs(dlon) > rotSpeedLimit) dlon = rotSpeedLimit * dlon / Math.abs(dlon);
+  Q.setrot.disabled = mode === 'variable';
+  Q.rotslower.disabled = dlon <= -1 * rotSpeedLimit;
+  Q.rotfaster.disabled = dlon >= rotSpeedLimit;
+  Q.stopautorotate.disabled = dlon === 0;
+
   setUrl();
 
 }; // setRotation
@@ -679,16 +743,29 @@ const setRotation = (mode = 'query') => {
 let dragStartX = 0;
 let dragStartY = 0;
 
-canvasA.addEventListener('mousemove', e => {
+const handleTouchStart = e => {
 
-  const dragX = e.clientX;
-  const dragY = e.clientY;
+  dragStartX = e.touches[0].pageX;
+  dragStartY = e.touches[0].pageY;
+
+}; // handleTouchStart
+
+const dragRotation = e => {
+
+  let dragX = e.clientX;
+  let dragY = e.clientY;
+
+  if (e.touches) {
+    dragX = e.touches[0].pageX;
+    dragY = e.touches[0].pageY;
+  }
+
   const dragDeltaX = dragX - dragStartX;
   const dragDeltaY = dragY - dragStartY;
   dragStartX = dragX;
   dragStartY = dragY;
 
-  const ismousedown = e.buttons % 2 === 1;
+  const ismousedown = e.buttons % 2 === 1 || e.touches;
 
   if (!ismousedown) return true;
 
@@ -698,7 +775,7 @@ canvasA.addEventListener('mousemove', e => {
   let isdragged = false;
 
   if (isd2lat && ismousedown && dragDeltaY !== 0) {
-    const latrot = 0.2 * dragDeltaY;
+    const latrot = 0.25 * dragDeltaY;
     const latnew = modlat(lat + latrot);
     if (latnew !== lat) {
       lat = latnew;
@@ -710,7 +787,14 @@ canvasA.addEventListener('mousemove', e => {
   }
 
   if (isd2lon && ismousedown && dragDeltaX !== 0) {
-    const lonrot = (Number(Q.xp.value) > 0 ? -1 : 1) * 0.2 * dragDeltaX;
+    const lonsign = (() => {
+      switch (Q.mirror.value) {
+        case 'auto': return (Number(Q.xp.value) > 0 ? -1 : 1);
+        case 'normal': return -1;
+        case 'mirror': return 1;
+      }
+    })();
+    const lonrot = lonsign * 0.25 * dragDeltaX;
     lon = modlon(lon + lonrot);
     const qtnew = latlon2qt(lat, lon);
     rotatableG.setRotationFromQuaternion(qtnew);
@@ -726,7 +810,11 @@ canvasA.addEventListener('mousemove', e => {
 
   setUrl();
 
-}); // mousemove
+}; // dragRotation
+
+canvasA.addEventListener('mousemove', e => dragRotation(e));
+canvasA.addEventListener('touchstart', e => handleTouchStart(e));
+canvasA.addEventListener('touchmove', e => dragRotation(e));
 
 let content;
 let fps = null;
@@ -876,7 +964,17 @@ const setPosition = () => {
   camera.updateProjectionMatrix();
   camera.updateMatrixWorld(true);
 
-  Q.centerText.style.transform = `scaleX(${signxp})`;
+  const scaleX = (() => {
+    switch (Q.mirror.value) {
+      case 'normal': return 1;
+      case 'mirror': return -1;
+      case 'auto': return signxp;
+    }
+  })();
+
+  Q.centerText.style.transform = `scaleX(${scaleX})`;
+  Q.canvasG.style.transform = `scaleX(${signxp * scaleX})`;
+  Q.canvasA.style.transform = `scaleX(${signxp * scaleX})`;
 
   const vp = camera.position;
 
@@ -966,7 +1064,11 @@ const usePresetPosition = (preset, issetpos = true) => {
 
   const p = positionPresets[preset];
   if (p.r) Q.r.value = p.r.toFixed(1);
-  Q.xp.value = p.xp.toFixed(1);
+  if (typeof p.xp === 'number') {
+    Q.xp.value = p.xp.toFixed(1);
+  } else if (typeof p.xp === 'function') {
+    Q.xp.value = p.xp(Q.r.value).toFixed(1);
+  }
   Q.yp.value = p.yp.toFixed(1);
   Q.pp.value = p.pp.toFixed(1);
   if (issetpos) setPosition();
@@ -1004,8 +1106,8 @@ const toggleVideoPlay = (state = null) => {
   if (!video.src) return true;
   if (state === null) state = video.paused ? 'play' : 'pause';
   state === 'play' ? video.play() : video.pause();
-  const nextstate = state === 'play' ? 'pause' : 'play ';
-  Q.videoplay.innerHTML = `${nextstate}[space]`;
+  const nextstate = state === 'play' ? '&#x23f8;&#xfe0f;' : '&#x25b6;&#xfe0f;';
+  Q.videoplay.innerHTML = nextstate;
 
 }; // toggleVideoPlay
 
@@ -1020,7 +1122,7 @@ const toggleAnnotation = (e) => {
 
 const toggleManiac = () => {
 
-  document.querySelectorAll('.maniac').forEach(q => { q.style.display = Q.togglemaniac.checked ? 'inline' : 'none'; });
+  document.querySelectorAll('.maniac').forEach(q => { q.style.display = Q.togglemaniac.checked ? 'revert' : 'none'; });
   setUrl();
 
 }; // toggleManiac
@@ -1053,6 +1155,14 @@ const togglePanel = (state = null) => {
 
 const toggleUsage = (state = 'block') =>  Q.usage.style.display = state;
 
+const changeAutoRotate = (inc = 0) => {
+
+  const dlon = 10 * Math.round(Number(Q.dlon.value) / 10 + Number(inc));
+  Q.dlon.value = dlon.toFixed(1);
+  setRotation('query');
+
+}; // changeAutoRotate
+
 const stopAutoRotate = () => {
 
   dlon = 0;
@@ -1063,24 +1173,24 @@ const stopAutoRotate = () => {
 
 window.onload = () => {
 
-  document.body.addEventListener('keydown', e => {
+  window.addEventListener('keydown', e => {
     if (e.key === ' ') {
       toggleVideoPlay();
+      // スペースキー押下によるスクロールの禁止
       if (e.target === document.body) e.preventDefault();
     }
   }); // keydown
 
+  // タッチデバイスでピンチインズームを禁止
+  window.addEventListener('touchstart', e => {
+    if (e.touches.length >= 2) e.preventDefault();
+  }, { passive: false });  // touchstart
+
+  // GUI 操作時のイベントハンドラ登録
   Q.showusage.addEventListener('click', () => toggleUsage('block'));
-  Q.toggleurl.addEventListener('change', () => setUrl());
   Q.togglemaniac.addEventListener('change', () => toggleManiac());
+  Q.toggleurl.addEventListener('change', () => setUrl());
   Q.hidepanel.addEventListener('change', () => togglePanel());
-
-  Q.fovauto.addEventListener('change', () => toggleFovAuto());
-  Q.setpos.addEventListener('click', () => setPosition());
-
-  Q.setrot.addEventListener('click', () => setRotation('query'));
-  Q.resetrot.addEventListener('click', () => setRotation('reset'));
-  Q.stopautorotate.addEventListener('click', () => stopAutoRotate());
 
   Q.content.addEventListener('change', () => changeContent());
 
@@ -1097,15 +1207,27 @@ window.onload = () => {
 
   Q.toggledesc.addEventListener('change', () => toggleDesc());
   Q.togglecentertext.addEventListener('change', () => toggleCenterText());
+
   Object.keys(annotations).forEach(a => Q[a].addEventListener('change', () => toggleAnnotation(a)));
+
+  Q.setrot.addEventListener('click', () => setRotation('query'));
+  Q.resetrot.addEventListener('click', () => setRotation('reset'));
+  Q.rotslower.addEventListener('click', () => changeAutoRotate(-1));
+  Q.rotfaster.addEventListener('click', () => changeAutoRotate(1));
+  Q.stopautorotate.addEventListener('click', () => stopAutoRotate());
+
+  Q.fovauto.addEventListener('change', () => toggleFovAuto());
+  Q.setpos.addEventListener('click', () => setPosition());
+  Q.mirror.addEventListener('change', () => setPosition());
 
   Q.showpanel.addEventListener('click', () => togglePanel(false));
 
   Q['usage_close'].addEventListener('click', () => toggleUsage('none'));
 
-  document.querySelectorAll('input[type=checkbox]').forEach(q => addEventListener('change', e => q.blur()));
+  document.querySelectorAll('input[type=checkbox], select').forEach(q => addEventListener('change', e => q.blur()));
   document.querySelectorAll('button').forEach(q => addEventListener('click', e => q.blur()));
 
+  // URL パラメータの取得・利用
   const params = {};
   (location.href.split('?').at(-1) || '').split('&').forEach(l => {
     const [key, val] = l.split('=');
@@ -1124,6 +1246,7 @@ window.onload = () => {
     }
   }
 
+  // 変数と UI のセットアップ
   toggleManiac();
   togglePanel();
 
