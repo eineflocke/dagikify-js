@@ -1188,7 +1188,12 @@ window.onload = () => {
 
   // タッチデバイスでダブルタップズームを禁止
   // window 対象だと効果がない
-  document.addEventListener('click', e => e.preventDefault());
+  // クリック操作が必要な要素は丁寧に除外する必要がある
+  document.addEventListener('click', e => {
+    if (e.target.tagName === 'INPUT' && e.target.getAttribute('type') === 'checkbox') return;
+    if (e.target.tagName === 'LABEL') return;
+    e.preventDefault();
+  });
 
   // GUI 操作のイベントハンドラ登録
   Q.showusage.addEventListener('click', () => toggleUsage('block'));
