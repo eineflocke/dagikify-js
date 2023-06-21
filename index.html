@@ -253,7 +253,7 @@ input[type=text] {
 </span>
 <br>
 ドラッグ・タッチで回転:<br>
-<label><input type="checkbox" id="d2lat" unchecked>lat</label>
+<label><input type="checkbox" id="d2lat" checked>lat</label>
 <label><input type="checkbox" id="d2lon" checked>lon</label><br>
 <span class="maniac">
 <br>
@@ -1184,9 +1184,13 @@ window.onload = () => {
   // タッチデバイスでピンチインズームを禁止
   window.addEventListener('touchstart', e => {
     if (e.touches.length >= 2) e.preventDefault();
-  }, { passive: false });  // touchstart
+  }, { passive: false }); // touchstart
 
-  // GUI 操作時のイベントハンドラ登録
+  // タッチデバイスでダブルタップズームを禁止
+  // window 対象だと効果がない
+  document.addEventListener('click', e => e.preventDefault());
+
+  // GUI 操作のイベントハンドラ登録
   Q.showusage.addEventListener('click', () => toggleUsage('block'));
   Q.togglemaniac.addEventListener('change', () => toggleManiac());
   Q.toggleurl.addEventListener('change', () => setUrl());
